@@ -5,6 +5,9 @@ import { insertionSort } from "./insertion-sort";
 import { mergeSort } from "./merge-sort";
 import { quickSort } from "./quick-sort";
 import { heapSort } from "./heap-sort";
+import { bogoSort } from "./bogo-sort";
+import { stalinSort } from "./stalin-sort";
+import { cocktailSort } from "./cocktail-sort";
 
 export type Algorithm = AlgorithmMeta & { fn: AlgorithmFn };
 
@@ -166,6 +169,89 @@ for (let i = (length >> 1) - 1; i >= 0; i--) {
 for (let i = length - 1; i > 0; i--) {
   swap(0, i);
   heapify(i, 0);
+}`,
+  },
+  {
+    slug: "bogo-sort",
+    name: "Bogo Sort",
+    fn: bogoSort,
+    description:
+      "Randomly shuffles the array, checks if it\u2019s sorted, and repeats. The monkey with a typewriter approach.",
+    timeComplexity: { best: "O(n)", average: "O((n+1)!)", worst: "O(\u221E)" },
+    spaceComplexity: "O(1)",
+    stable: false,
+    explanation:
+      "Bogo Sort (a.k.a. Stupid Sort, Monkey Sort) works by randomly shuffling the entire array, then checking if it happens to be sorted. If not, shuffle again. Average case is O((n+1)!) which means for 10 elements you\u2019d expect ~40 million shuffles. For 15 elements, heat death of the universe. Use small arrays unless you have a lot of patience.",
+    code: `// Bogo Sort: shuffle until sorted
+// WARNING: Use a VERY small array size
+function isSorted() {
+  for (let i = 0; i < length - 1; i++) {
+    if (compare(i, i + 1)) return false;
+  }
+  return true;
+}
+
+let attempts = 0;
+while (!isSorted() && attempts < 100000) {
+  for (let i = length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    swap(i, j);
+  }
+  attempts++;
+}`,
+  },
+  {
+    slug: "stalin-sort",
+    name: "Stalin Sort",
+    fn: stalinSort,
+    description:
+      "Elements that are out of order are simply eliminated. The survivors are sorted. O(n) time, comrade.",
+    timeComplexity: { best: "O(n)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(1)",
+    stable: true,
+    explanation:
+      "Stalin Sort iterates through the array once. Any element smaller than the previous one is \u201Cpurged.\u201D The remaining elements are, by definition, in sorted order. It\u2019s O(n) and technically correct \u2014 the best kind of correct. The downside is your array gets shorter. A lot shorter. But the survivors are very well organized.",
+    code: `// Stalin Sort: eliminate the disobedient
+let lastGood = 0;
+for (let i = 1; i < length; i++) {
+  if (!compare(lastGood, i)) {
+    lastGood = i;
+  }
+  // out-of-order elements are simply ignored
+}`,
+  },
+  {
+    slug: "cocktail-sort",
+    name: "Cocktail Sort",
+    fn: cocktailSort,
+    description:
+      "Bubble sort that shakes in both directions, like a bartender mixing a cocktail.",
+    timeComplexity: { best: "O(n)", average: "O(n\u00B2)", worst: "O(n\u00B2)" },
+    spaceComplexity: "O(1)",
+    stable: true,
+    explanation:
+      "Cocktail Shaker Sort (a.k.a. Bidirectional Bubble Sort) is a variation of Bubble Sort that traverses the array in both directions alternately. The forward pass bubbles the largest element to the end, then the backward pass bubbles the smallest to the beginning. It\u2019s slightly better than Bubble Sort for arrays where small elements are stuck at the end (\"turtles\"), but still O(n\u00B2).",
+    code: `let start = 0;
+let end = length - 1;
+let swapped = true;
+while (swapped) {
+  swapped = false;
+  for (let i = start; i < end; i++) {
+    if (compare(i, i + 1)) {
+      swap(i, i + 1);
+      swapped = true;
+    }
+  }
+  end--;
+  if (!swapped) break;
+  swapped = false;
+  for (let i = end; i > start; i--) {
+    if (compare(i - 1, i)) {
+      swap(i - 1, i);
+      swapped = true;
+    }
+  }
+  start++;
 }`,
   },
 ];
