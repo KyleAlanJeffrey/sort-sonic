@@ -15,7 +15,7 @@ export default function Home() {
             Interactive Algorithm Visualizer
           </div>
 
-          <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight leading-[1.1]">
+          <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight leading-tight">
             See and hear
             <br />
             <span className="text-accent">sorting algorithms</span>

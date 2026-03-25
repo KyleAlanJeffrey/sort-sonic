@@ -3,10 +3,10 @@
 :root {
   --background: #06060a;
   --foreground: #e8e6e3;
-  --foreground-muted: #6b6966;
+  --foreground-muted: #9b9893;
   --accent: #00ffd5;
-  --accent-dim: #00ffd520;
-  --accent-glow: #00ffd540;
+  --accent-dim: #00ffd530;
+  --accent-glow: #00ffd560;
   --compare-color: #fbbf24;
   --compare-glow: #fbbf2440;
   --swap-color: #f43f5e;
@@ -15,11 +15,11 @@
   --sorted-glow: #34d39940;
   --bar-color: #00ffd5;
   --bar-dim: #00ffd5bb;
-  --surface: #0c0c12;
-  --surface-2: #12121a;
-  --surface-3: #1a1a24;
-  --border: #1e1e2a;
-  --border-bright: #2a2a3a;
+  --surface: #0e0e16;
+  --surface-2: #151520;
+  --surface-3: #1e1e2c;
+  --border: #252535;
+  --border-bright: #353548;
   --grid: #ffffff06;
 }
 
@@ -44,13 +44,21 @@
   --color-border: var(--border);
   --color-border-bright: var(--border-bright);
   --color-grid: var(--grid);
-  --font-sans: var(--font-syne);
+  --font-sans: var(--font-outfit);
   --font-mono: var(--font-jetbrains);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+button, a, [role="button"] {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
 }
 
 /* Noise texture overlay */

@@ -14,72 +14,159 @@ export const algorithms: Algorithm[] = [
     name: "Bubble Sort",
     fn: bubbleSort,
     description:
-      "Repeatedly steps through the list, compares adjacent elements, and swaps them if they are in the wrong order.",
+      "Compares adjacent elements and swaps them if out of order, bubbling the largest to the end each pass.",
     timeComplexity: { best: "O(n)", average: "O(n\u00B2)", worst: "O(n\u00B2)" },
     spaceComplexity: "O(1)",
     stable: true,
     explanation:
-      "Bubble Sort works by repeatedly walking through the array, comparing each pair of adjacent elements and swapping them if they\u2019re in the wrong order. After each full pass, the largest unsorted element \u201Cbubbles up\u201D to its correct position at the end. The algorithm keeps making passes until no swaps are needed, meaning the array is sorted. It\u2019s simple but inefficient for large datasets.",
+      "Bubble Sort walks through the array comparing each pair of adjacent elements, swapping them if they\u2019re in the wrong order. After each pass the largest unsorted element \u201Cbubbles\u201D to its final position. Passes repeat until no swaps are needed.",
+    code: `for (let i = 0; i < length; i++) {
+  for (let j = 0; j < length - i - 1; j++) {
+    if (compare(j, j + 1)) {
+      swap(j, j + 1);
+    }
+  }
+}`,
   },
   {
     slug: "selection-sort",
     name: "Selection Sort",
     fn: selectionSort,
     description:
-      "Finds the minimum element from the unsorted part and puts it at the beginning.",
+      "Finds the minimum element in the unsorted region and swaps it into the next sorted position.",
     timeComplexity: { best: "O(n\u00B2)", average: "O(n\u00B2)", worst: "O(n\u00B2)" },
     spaceComplexity: "O(1)",
     stable: false,
     explanation:
-      "Selection Sort divides the array into a sorted and unsorted region. On each pass, it scans the unsorted region to find the smallest element, then swaps it into the next position of the sorted region. This continues until the entire array is sorted. It always makes O(n\u00B2) comparisons regardless of the input.",
+      "Selection Sort divides the array into sorted and unsorted regions. Each pass scans the unsorted region for the smallest element, then swaps it into the next sorted position. Always makes O(n\u00B2) comparisons regardless of input order.",
+    code: `for (let i = 0; i < length - 1; i++) {
+  let minIdx = i;
+  for (let j = i + 1; j < length; j++) {
+    if (compare(minIdx, j)) {
+      minIdx = j;
+    }
+  }
+  if (minIdx !== i) {
+    swap(i, minIdx);
+  }
+}`,
   },
   {
     slug: "insertion-sort",
     name: "Insertion Sort",
     fn: insertionSort,
     description:
-      "Builds the sorted array one item at a time by inserting each element into its correct position.",
+      "Builds a sorted array one element at a time by inserting each into its correct position.",
     timeComplexity: { best: "O(n)", average: "O(n\u00B2)", worst: "O(n\u00B2)" },
     spaceComplexity: "O(1)",
     stable: true,
     explanation:
-      "Insertion Sort builds a sorted portion of the array from left to right. For each new element, it shifts larger sorted elements to the right to make room, then inserts the element in its correct position. It\u2019s efficient for small or nearly-sorted datasets and is the algorithm most people use when sorting a hand of playing cards.",
+      "Insertion Sort builds a sorted portion from left to right. For each new element, it shifts larger sorted elements right to make room, then inserts the element in place. Efficient for small or nearly-sorted data.",
+    code: `for (let i = 1; i < length; i++) {
+  let j = i;
+  while (j > 0 && compare(j - 1, j)) {
+    swap(j - 1, j);
+    j--;
+  }
+}`,
   },
   {
     slug: "merge-sort",
     name: "Merge Sort",
     fn: mergeSort,
     description:
-      "Divides the array in half, recursively sorts each half, then merges the sorted halves.",
+      "Recursively splits the array in half, then merges sorted halves back together.",
     timeComplexity: { best: "O(n log n)", average: "O(n log n)", worst: "O(n log n)" },
     spaceComplexity: "O(n)",
     stable: true,
     explanation:
-      "Merge Sort uses a divide-and-conquer strategy. It splits the array in half recursively until each sub-array has one element, then merges them back together in sorted order. The merge step is the key operation \u2014 it combines two sorted arrays into one by comparing their front elements. It guarantees O(n log n) time but requires extra memory for the temporary arrays.",
+      "Merge Sort splits the array recursively until each piece has one element, then merges them back in sorted order. Guarantees O(n log n) time but needs extra memory for temporary arrays.",
+    code: `// Merge sort using get/set helpers
+// (recursive approach with auxiliary storage)
+function mergeSort(lo, hi) {
+  if (hi - lo <= 1) return;
+  const mid = (lo + hi) >> 1;
+  mergeSort(lo, mid);
+  mergeSort(mid, hi);
+  // Merge step
+  const tmp = [];
+  let i = lo, j = mid;
+  while (i < mid && j < hi) {
+    // compare uses original indices
+    if (!compare(j, i)) {
+      tmp.push(get(i++));
+    } else {
+      tmp.push(get(j++));
+    }
+  }
+  while (i < mid) tmp.push(get(i++));
+  while (j < hi) tmp.push(get(j++));
+  for (let k = 0; k < tmp.length; k++) {
+    set(lo + k, tmp[k]);
+  }
+}
+mergeSort(0, length);`,
   },
   {
     slug: "quick-sort",
     name: "Quick Sort",
     fn: quickSort,
     description:
-      "Picks a pivot element, partitions the array around it, then recursively sorts each partition.",
+      "Picks a pivot, partitions elements around it, then recursively sorts each partition.",
     timeComplexity: { best: "O(n log n)", average: "O(n log n)", worst: "O(n\u00B2)" },
     spaceComplexity: "O(log n)",
     stable: false,
     explanation:
-      "Quick Sort selects a pivot element and partitions the array so that elements smaller than the pivot go to the left and larger ones go to the right. It then recursively sorts both partitions. The choice of pivot matters \u2014 a bad pivot leads to O(n\u00B2) performance, but on average it\u2019s one of the fastest general-purpose sorting algorithms.",
+      "Quick Sort picks a pivot and partitions the array so smaller elements go left, larger go right. It recursively sorts both sides. Pivot choice matters \u2014 bad pivots cause O(n\u00B2), but average case is among the fastest.",
+    code: `function quickSort(lo, hi) {
+  if (lo >= hi) return;
+  // Partition with last element as pivot
+  let i = lo;
+  for (let j = lo; j < hi; j++) {
+    if (compare(hi, j)) {
+      swap(i, j);
+      i++;
+    }
+  }
+  swap(i, hi);
+  quickSort(lo, i - 1);
+  quickSort(i + 1, hi);
+}
+quickSort(0, length - 1);`,
   },
   {
     slug: "heap-sort",
     name: "Heap Sort",
     fn: heapSort,
     description:
-      "Builds a max heap from the array, then repeatedly extracts the maximum to build the sorted result.",
+      "Builds a max heap, then repeatedly extracts the maximum to produce sorted order.",
     timeComplexity: { best: "O(n log n)", average: "O(n log n)", worst: "O(n log n)" },
     spaceComplexity: "O(1)",
     stable: false,
     explanation:
-      "Heap Sort first transforms the array into a max heap \u2014 a complete binary tree where every parent is larger than its children. It then repeatedly removes the root (the maximum element), places it at the end of the array, and re-heapifies the remaining elements. This guarantees O(n log n) time with O(1) extra space, making it useful when memory is constrained.",
+      "Heap Sort builds a max heap (every parent larger than its children), then repeatedly swaps the root to the end and re-heapifies. Guarantees O(n log n) with O(1) extra space.",
+    code: `function heapify(n, i) {
+  let largest = i;
+  const left = 2 * i + 1;
+  const right = 2 * i + 2;
+  if (left < n && compare(largest, left))
+    largest = left;
+  if (right < n && compare(largest, right))
+    largest = right;
+  if (largest !== i) {
+    swap(i, largest);
+    heapify(n, largest);
+  }
+}
+// Build max heap
+for (let i = (length >> 1) - 1; i >= 0; i--) {
+  heapify(length, i);
+}
+// Extract elements
+for (let i = length - 1; i > 0; i--) {
+  swap(0, i);
+  heapify(i, 0);
+}`,
   },
 ];
 

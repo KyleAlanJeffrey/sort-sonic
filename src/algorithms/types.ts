@@ -18,4 +18,5 @@ export type AlgorithmMeta = {
   spaceComplexity: string;
   stable: boolean;
   explanation: string;
+  code: string;
 };
