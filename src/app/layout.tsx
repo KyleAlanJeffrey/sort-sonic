@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Outfit, JetBrains_Mono } from "next/font/google";
 import { Navbar } from "@/components/navbar";
-import { KyleBadge } from "@/components/kyle-badge";
+import { KyleBadge } from "@kylealanjeffrey/badge";
 import "./globals.css";
 
 const outfit = Outfit({
