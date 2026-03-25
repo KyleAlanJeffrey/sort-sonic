@@ -28,7 +28,8 @@ export function Playground({ initialAlgorithmSlug }: PlaygroundProps) {
   const [error, setError] = useState<string | null>(null);
   const [operationCount, setOperationCount] = useState(0);
 
-  const [array, setArray] = useState<number[]>(() => generateArray(arraySize));
+  const [array, setArray] = useState<number[]>([]);
+  const playgroundInitialized = useRef(false);
   const [activeIndices, setActiveIndices] = useState<number[]>([]);
   const [sortedIndices, setSortedIndices] = useState<Set<number>>(new Set());
   const [operationType, setOperationType] = useState<SortOperation["type"] | null>(null);
@@ -47,6 +48,16 @@ export function Playground({ initialAlgorithmSlug }: PlaygroundProps) {
 
   const sweep = useVictorySweep(arraySize);
   const prevPgState = useRef<PgState>("idle");
+
+  // Initialize array on client only to avoid hydration mismatch
+  useEffect(() => {
+    if (!playgroundInitialized.current) {
+      playgroundInitialized.current = true;
+      const arr = generateArray(arraySize);
+      arrayRef.current = arr;
+      setArray(arr);
+    }
+  }, [arraySize]);
 
   useEffect(() => { speedRef.current = speed; }, [speed]);
   useEffect(() => { pgStateRef.current = pgState; }, [pgState]);

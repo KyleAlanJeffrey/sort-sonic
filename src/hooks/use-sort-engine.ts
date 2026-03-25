@@ -13,7 +13,8 @@ function generateArray(size: number): number[] {
 }
 
 export function useSortEngine(initialSize: number = 50) {
-  const [array, setArray] = useState<number[]>(() => generateArray(initialSize));
+  const [array, setArray] = useState<number[]>([]);
+  const initialized = useRef(false);
   const [activeIndices, setActiveIndices] = useState<number[]>([]);
   const [sortedIndices, setSortedIndices] = useState<Set<number>>(new Set());
   const [operationType, setOperationType] = useState<SortOperation["type"] | null>(null);
@@ -29,6 +30,16 @@ export function useSortEngine(initialSize: number = 50) {
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const maxValue = useRef<number>(initialSize);
+
+  // Initialize array on client only to avoid hydration mismatch
+  useEffect(() => {
+    if (!initialized.current) {
+      initialized.current = true;
+      const arr = generateArray(initialSize);
+      arrayRef.current = arr;
+      setArray(arr);
+    }
+  }, [initialSize]);
 
   const updateArray = useCallback((newArr: number[]) => {
     arrayRef.current = newArr;
