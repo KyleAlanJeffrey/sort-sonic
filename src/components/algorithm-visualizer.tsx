@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Visualizer } from "./visualizer";
 import { AlgorithmEditor } from "./code-editor";
 import { useSortEngine } from "@/hooks/use-sort-engine";
+import { useVictorySweep } from "@/hooks/use-victory-sweep";
 import { getAlgorithm } from "@/algorithms/metadata";
 import Link from "next/link";
 
@@ -16,7 +17,17 @@ export function AlgorithmVisualizer({ slug }: AlgorithmVisualizerProps) {
   const [arraySize, setArraySize] = useState(50);
 
   const engine = useSortEngine(arraySize);
+  const sweep = useVictorySweep(arraySize);
   const algorithmMeta = getAlgorithm(slug);
+  const prevState = useRef(engine.state);
+
+  // Trigger victory sweep when sort completes
+  useEffect(() => {
+    if (prevState.current !== "complete" && engine.state === "complete") {
+      sweep.startSweep(engine.array);
+    }
+    prevState.current = engine.state;
+  }, [engine.state, engine.array, sweep]);
 
   const handlePlay = useCallback(() => {
     const algo = getAlgorithm(slug);
@@ -37,9 +48,15 @@ export function AlgorithmVisualizer({ slug }: AlgorithmVisualizerProps) {
     (size: number) => {
       setArraySize(size);
       engine.reset(size);
+      sweep.reset();
     },
-    [engine]
+    [engine, sweep]
   );
+
+  const handleReset = useCallback(() => {
+    engine.reset(arraySize);
+    sweep.reset();
+  }, [engine, arraySize, sweep]);
 
   if (!algorithmMeta) return null;
 
@@ -61,6 +78,7 @@ export function AlgorithmVisualizer({ slug }: AlgorithmVisualizerProps) {
         state={engine.state}
         algorithmName={algorithmMeta.name}
         operationCount={engine.operationCount}
+        sweepIndex={sweep.sweepIndex}
       />
 
       {/* Code + Analysis side by side */}
@@ -73,7 +91,7 @@ export function AlgorithmVisualizer({ slug }: AlgorithmVisualizerProps) {
           onPause={engine.pause}
           onResume={engine.resume}
           onStep={engine.step}
-          onReset={() => engine.reset(arraySize)}
+          onReset={handleReset}
         />
 
         <div className="rounded-xl border border-border bg-surface p-5 flex flex-col gap-3">

@@ -18,17 +18,52 @@ type VisualizerProps = {
   state?: EngineState;
   algorithmName?: string;
   operationCount?: number;
+  // Victory sweep
+  sweepIndex?: number;
 };
+
+// HSL-based rainbow that goes from cyan -> green -> yellow -> accent
+function sweepColor(index: number, total: number): { background: string; boxShadow: string } {
+  // Hue goes from 160 (cyan) to 140 (green) — a satisfying sweep
+  const hue = 160 + (index / total) * 100; // cyan -> green -> yellow-green
+  const sat = 80;
+  const light = 55;
+  const color = `hsl(${hue}, ${sat}%, ${light}%)`;
+  const glow = `hsl(${hue}, ${sat}%, ${light + 15}%)`;
+  return {
+    background: `linear-gradient(to top, hsl(${hue}, ${sat}%, ${light - 15}%), ${color})`,
+    boxShadow: `0 0 14px ${glow}40, 0 0 28px ${glow}20`,
+  };
+}
 
 function getBarStyle(
   value: number,
   maxValue: number,
   index: number,
+  total: number,
   activeIndices: number[],
   sortedIndices: Set<number>,
-  operationType: OperationType | null
+  operationType: OperationType | null,
+  sweepIndex: number
 ): { background: string; boxShadow: string; opacity: number } {
   const t = value / maxValue;
+
+  // Victory sweep active
+  if (sweepIndex >= 0) {
+    if (index <= sweepIndex) {
+      const { background, boxShadow } = sweepColor(index, total);
+      // Bars near the sweep head glow brighter
+      const dist = sweepIndex - index;
+      const trailFade = dist < 6 ? 1 : Math.max(0.7, 1 - (dist - 6) * 0.02);
+      return { background, boxShadow, opacity: trailFade };
+    }
+    // Bars not yet swept — dim
+    return {
+      background: `linear-gradient(to top, rgba(0, 180, 150, 0.2), rgba(0, 255, 213, 0.25))`,
+      boxShadow: "none",
+      opacity: 0.3,
+    };
+  }
 
   if (sortedIndices.has(index)) {
     return {
@@ -130,6 +165,7 @@ export function Visualizer({
   state,
   algorithmName,
   operationCount,
+  sweepIndex,
 }: VisualizerProps) {
   const hasControls = onSpeedChange || onSizeChange;
   const hasStatus = state !== undefined && algorithmName !== undefined;
@@ -200,7 +236,7 @@ export function Visualizer({
         <div className="flex items-end justify-center gap-px h-90 w-full p-4 pb-3">
           {array.map((value, index) => {
             const heightPercent = (value / maxValue) * 100;
-            const style = getBarStyle(value, maxValue, index, activeIndices, sortedIndices, operationType);
+            const style = getBarStyle(value, maxValue, index, array.length, activeIndices, sortedIndices, operationType, sweepIndex ?? -1);
             return (
               <div
                 key={index}

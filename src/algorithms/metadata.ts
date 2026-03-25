@@ -85,28 +85,25 @@ export const algorithms: Algorithm[] = [
     explanation:
       "Merge Sort splits the array recursively until each piece has one element, then merges them back in sorted order. Guarantees O(n log n) time but needs extra memory for temporary arrays.",
     code: `// Merge sort using get/set helpers
-// (recursive approach with auxiliary storage)
 function mergeSort(lo, hi) {
   if (hi - lo <= 1) return;
   const mid = (lo + hi) >> 1;
   mergeSort(lo, mid);
   mergeSort(mid, hi);
-  // Merge step
-  const tmp = [];
-  let i = lo, j = mid;
-  while (i < mid && j < hi) {
-    // compare uses original indices
-    if (!compare(j, i)) {
-      tmp.push(get(i++));
+  // Copy both halves into temp arrays first
+  const left = [], right = [];
+  for (let i = lo; i < mid; i++) left.push(get(i));
+  for (let i = mid; i < hi; i++) right.push(get(i));
+  let i = 0, j = 0, k = lo;
+  while (i < left.length && j < right.length) {
+    if (left[i] <= right[j]) {
+      set(k++, left[i++]);
     } else {
-      tmp.push(get(j++));
+      set(k++, right[j++]);
     }
   }
-  while (i < mid) tmp.push(get(i++));
-  while (j < hi) tmp.push(get(j++));
-  for (let k = 0; k < tmp.length; k++) {
-    set(lo + k, tmp[k]);
-  }
+  while (i < left.length) set(k++, left[i++]);
+  while (j < right.length) set(k++, right[j++]);
 }
 mergeSort(0, length);`,
   },
@@ -152,9 +149,9 @@ quickSort(0, length - 1);`,
   let largest = i;
   const left = 2 * i + 1;
   const right = 2 * i + 2;
-  if (left < n && compare(largest, left))
+  if (left < n && compare(left, largest))
     largest = left;
-  if (right < n && compare(largest, right))
+  if (right < n && compare(right, largest))
     largest = right;
   if (largest !== i) {
     swap(i, largest);

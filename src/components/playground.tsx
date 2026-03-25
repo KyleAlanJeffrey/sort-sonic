@@ -5,7 +5,8 @@ import { Visualizer } from "./visualizer";
 import { PlaygroundEditor } from "./code-editor";
 import { getAlgorithm } from "@/algorithms/metadata";
 import { SortOperation } from "@/algorithms/types";
-import { playTone, playDualTone, playCompletionSweep } from "@/audio/engine";
+import { playTone, playDualTone } from "@/audio/engine";
+import { useVictorySweep } from "@/hooks/use-victory-sweep";
 
 type PlaygroundProps = {
   initialAlgorithmSlug?: string;
@@ -44,6 +45,9 @@ export function Playground({ initialAlgorithmSlug }: PlaygroundProps) {
   const replayWorkingRef = useRef<number[]>([]);
   const pgStateRef = useRef<PgState>("idle");
 
+  const sweep = useVictorySweep(arraySize);
+  const prevPgState = useRef<PgState>("idle");
+
   useEffect(() => { speedRef.current = speed; }, [speed]);
   useEffect(() => { pgStateRef.current = pgState; }, [pgState]);
   useEffect(() => {
@@ -52,6 +56,14 @@ export function Playground({ initialAlgorithmSlug }: PlaygroundProps) {
       clearTimeout(replayTimerRef.current);
     };
   }, []);
+
+  // Trigger victory sweep on completion
+  useEffect(() => {
+    if (prevPgState.current !== "complete" && pgState === "complete") {
+      sweep.startSweep(arrayRef.current);
+    }
+    prevPgState.current = pgState;
+  }, [pgState, sweep]);
 
   const resetArray = useCallback((size?: number) => {
     const s = size ?? arraySize;
@@ -69,7 +81,8 @@ export function Playground({ initialAlgorithmSlug }: PlaygroundProps) {
     setError(null);
     setOperationCount(0);
     opsRef.current = [];
-  }, [arraySize]);
+    sweep.reset();
+  }, [arraySize, sweep]);
 
   const playNextOp = useCallback(() => {
     if (pgStateRef.current !== "replaying") return;
@@ -87,7 +100,7 @@ export function Playground({ initialAlgorithmSlug }: PlaygroundProps) {
       setSortedIndices(new Set(finalArray.map((_, i) => i)));
       setPgState("complete");
       pgStateRef.current = "complete";
-      playCompletionSweep(finalArray.length, finalArray.length);
+      // Victory sweep triggered by effect
       return;
     }
 
@@ -160,7 +173,7 @@ export function Playground({ initialAlgorithmSlug }: PlaygroundProps) {
       setSortedIndices(new Set(finalArray.map((_, i) => i)));
       setPgState("complete");
       pgStateRef.current = "complete";
-      playCompletionSweep(finalArray.length, finalArray.length);
+      // Victory sweep triggered by effect
       return;
     }
 
@@ -295,6 +308,7 @@ export function Playground({ initialAlgorithmSlug }: PlaygroundProps) {
         state={vizState}
         algorithmName="Custom"
         operationCount={operationCount}
+        sweepIndex={sweep.sweepIndex}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-4">

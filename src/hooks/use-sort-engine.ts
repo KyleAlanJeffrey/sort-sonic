@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { SortOperation, SortGenerator, AlgorithmFn } from "@/algorithms/types";
-import { playTone, playDualTone, playCompletionSweep } from "@/audio/engine";
+import { playTone, playDualTone } from "@/audio/engine";
 
 export type EngineState = "idle" | "running" | "paused" | "complete";
 
@@ -63,8 +63,7 @@ export function useSortEngine(initialSize: number = 50) {
       setOperationType(null);
       setState("complete");
       stateRef.current = "complete";
-      setSortedIndices(new Set(arrayRef.current.map((_, i) => i)));
-      playCompletionSweep(arrayRef.current.length, maxValue.current);
+      // Don't mark sorted indices — let the victory sweep handle the visual
       return false;
     }
 
