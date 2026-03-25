@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Outfit, JetBrains_Mono } from "next/font/google";
-import Link from "next/link";
+import { Navbar } from "@/components/navbar";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -63,30 +63,7 @@ export default function RootLayout({
       className={`${outfit.variable} ${jetbrains.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
-        <header className="border-b border-border/50 px-6 py-5 backdrop-blur-sm bg-background/80 sticky top-0 z-50">
-          <nav className="max-w-5xl mx-auto flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-2 h-2 rounded-full bg-accent shadow-[0_0_8px_var(--accent-glow)] group-hover:shadow-[0_0_14px_var(--accent)] transition-shadow" />
-              <span className="text-lg font-bold tracking-wide uppercase">
-                Sort<span className="text-accent">Sonic</span>
-              </span>
-            </Link>
-            <div className="flex gap-6 text-sm font-mono text-foreground-muted tracking-wider uppercase">
-              <Link
-                href="/"
-                className="hover:text-accent transition-colors duration-200"
-              >
-                Home
-              </Link>
-              <Link
-                href="/playground"
-                className="hover:text-accent transition-colors duration-200"
-              >
-                Playground
-              </Link>
-            </div>
-          </nav>
-        </header>
+        <Navbar />
         <main className="flex-1 px-6 py-10">{children}</main>
         <footer className="border-t border-border/30 px-6 py-5">
           <div className="max-w-5xl mx-auto flex items-center justify-between">
