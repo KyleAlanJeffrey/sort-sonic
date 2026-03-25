@@ -175,6 +175,14 @@ input[type="range"]::-moz-range-thumb {
   color: var(--accent);
 }
 
+/* Syntax highlighting */
+.syn-comment { color: #555; font-style: italic; }
+.syn-keyword { color: #c792ea; }
+.syn-string { color: #c3e88d; }
+.syn-number { color: #f78c6c; }
+.syn-builtin { color: #00ffd5; font-weight: 500; }
+.syn-fn { color: #82aaff; }
+
 /* Textarea scrollbar */
 textarea::-webkit-scrollbar {
   width: 6px;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { SortOperation, SortGenerator, AlgorithmFn } from "@/algorithms/types";
 import { playTone, playDualTone, playCompletionSweep } from "@/audio/engine";
 
@@ -161,6 +161,16 @@ export function useSortEngine(initialSize: number = 50) {
 
   const setSpeed = useCallback((ms: number) => {
     speedRef.current = ms;
+  }, []);
+
+  // Cleanup on unmount — stop sorting when navigating away
+  useEffect(() => {
+    return () => {
+      cancelAnimationFrame(animFrameRef.current);
+      clearTimeout(timeoutRef.current);
+      stateRef.current = "idle";
+      generatorRef.current = null;
+    };
   }, []);
 
   return {

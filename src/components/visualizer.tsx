@@ -8,6 +8,11 @@ type VisualizerProps = {
   sortedIndices: Set<number>;
   operationType: OperationType | null;
   maxValue: number;
+  speed?: number;
+  arraySize?: number;
+  onSpeedChange?: (ms: number) => void;
+  onSizeChange?: (size: number) => void;
+  sizeDisabled?: boolean;
 };
 
 function getBarStyle(
@@ -45,7 +50,6 @@ function getBarStyle(
     }
   }
 
-  // Default: cyan gradient with brightness tied to value
   return {
     background: `linear-gradient(to top, rgba(0, 180, 150, ${0.6 + t * 0.4}), rgba(0, 255, 213, ${0.7 + t * 0.3}))`,
     boxShadow: `0 0 ${4 + t * 4}px var(--accent-dim)`,
@@ -59,23 +63,69 @@ export function Visualizer({
   sortedIndices,
   operationType,
   maxValue,
+  speed,
+  arraySize,
+  onSpeedChange,
+  onSizeChange,
+  sizeDisabled = false,
 }: VisualizerProps) {
+  const hasControls = onSpeedChange || onSizeChange;
+
   return (
     <div className="relative rounded-xl overflow-hidden border border-border bg-surface">
-      {/* Top label bar */}
+      {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-border/50">
         <div className="flex items-center gap-2">
           <div className="w-1.5 h-1.5 rounded-full bg-accent shadow-[0_0_6px_var(--accent-glow)]" />
           <span className="text-[10px] font-mono text-foreground-muted tracking-widest uppercase">
             Output
           </span>
+          <span className="text-[10px] font-mono text-foreground-muted/40 ml-1">
+            {array.length} elements
+          </span>
         </div>
-        <span className="text-[10px] font-mono text-foreground-muted/50">
-          {array.length} elements
-        </span>
+
+        {hasControls && (
+          <div className="flex items-center gap-5">
+            {onSpeedChange && speed !== undefined && (
+              <label className="flex items-center gap-2">
+                <span className="text-[10px] font-mono text-foreground-muted/50 tracking-wider uppercase">
+                  Spd
+                </span>
+                <input
+                  type="range"
+                  min={1}
+                  max={200}
+                  value={201 - speed}
+                  onChange={(e) => onSpeedChange(201 - Number(e.target.value))}
+                  className="w-20"
+                />
+              </label>
+            )}
+            {onSizeChange && arraySize !== undefined && (
+              <label className="flex items-center gap-2">
+                <span className="text-[10px] font-mono text-foreground-muted/50 tracking-wider uppercase">
+                  Size
+                </span>
+                <input
+                  type="range"
+                  min={10}
+                  max={200}
+                  value={arraySize}
+                  onChange={(e) => onSizeChange(Number(e.target.value))}
+                  className="w-20"
+                  disabled={sizeDisabled}
+                />
+                <span className="text-[10px] font-mono text-foreground-muted/40 tabular-nums w-6 text-right">
+                  {arraySize}
+                </span>
+              </label>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Visualizer area */}
+      {/* Bars */}
       <div className="relative scanlines viz-grid">
         <div className="flex items-end justify-center gap-px h-90 w-full p-4 pb-3">
           {array.map((value, index) => {
@@ -103,7 +153,6 @@ export function Visualizer({
           })}
         </div>
 
-        {/* Bottom reflection */}
         <div className="h-px w-full bg-linear-to-r from-transparent via-accent/10 to-transparent" />
       </div>
     </div>

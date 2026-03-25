@@ -2,8 +2,8 @@
 
 import { useState, useCallback } from "react";
 import { Visualizer } from "./visualizer";
-import { Controls } from "./controls";
 import { StepInfo } from "./step-info";
+import { CodeEditor } from "./code-editor";
 import { useSortEngine } from "@/hooks/use-sort-engine";
 import { getAlgorithm } from "@/algorithms/metadata";
 import Link from "next/link";
@@ -19,12 +19,15 @@ export function AlgorithmVisualizer({ slug }: AlgorithmVisualizerProps) {
   const engine = useSortEngine(arraySize);
   const algorithmMeta = getAlgorithm(slug);
 
-  const handlePlay = useCallback(() => {
-    const algo = getAlgorithm(slug);
-    if (algo) {
-      engine.start(algo.fn, algo.slug);
-    }
-  }, [slug, engine]);
+  const handlePlay = useCallback(
+    (_code: string) => {
+      const algo = getAlgorithm(slug);
+      if (algo) {
+        engine.start(algo.fn, algo.slug);
+      }
+    },
+    [slug, engine]
+  );
 
   const handleSpeedChange = useCallback(
     (ms: number) => {
@@ -44,6 +47,8 @@ export function AlgorithmVisualizer({ slug }: AlgorithmVisualizerProps) {
 
   if (!algorithmMeta) return null;
 
+  const isActive = engine.state === "running" || engine.state === "paused";
+
   return (
     <div className="flex flex-col gap-5 w-full">
       <Visualizer
@@ -52,6 +57,11 @@ export function AlgorithmVisualizer({ slug }: AlgorithmVisualizerProps) {
         sortedIndices={engine.sortedIndices}
         operationType={engine.operationType}
         maxValue={arraySize}
+        speed={speed}
+        arraySize={arraySize}
+        onSpeedChange={handleSpeedChange}
+        onSizeChange={handleSizeChange}
+        sizeDisabled={isActive || engine.state === "complete"}
       />
 
       <StepInfo
@@ -61,18 +71,20 @@ export function AlgorithmVisualizer({ slug }: AlgorithmVisualizerProps) {
         algorithmName={algorithmMeta.name}
       />
 
-      <Controls
-        state={engine.state}
-        operationCount={engine.operationCount}
-        speed={speed}
-        arraySize={arraySize}
-        onPlay={handlePlay}
-        onPause={engine.pause}
-        onResume={engine.resume}
-        onReset={() => engine.reset(arraySize)}
-        onSpeedChange={handleSpeedChange}
-        onSizeChange={handleSizeChange}
-        onStep={engine.step}
+      <CodeEditor
+        initialCode={algorithmMeta.code}
+        error={null}
+        readOnly
+        transport={{
+          state: engine.state,
+          operationCount: engine.operationCount,
+          onPlay: handlePlay,
+          onPause: engine.pause,
+          onResume: engine.resume,
+          onStep: engine.step,
+          onStop: () => engine.reset(arraySize),
+          playLabel: "Sort",
+        }}
       />
 
       {/* Analysis panel */}
@@ -114,12 +126,11 @@ export function AlgorithmVisualizer({ slug }: AlgorithmVisualizerProps) {
         </p>
       </div>
 
-      {/* Link to playground with this algorithm's code */}
       <Link
         href={`/playground?algorithm=${slug}`}
         className="self-start flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-foreground-muted hover:text-accent transition-colors"
       >
-        <span>View code in playground</span>
+        <span>Edit in playground</span>
         <span className="text-accent">{"→"}</span>
       </Link>
     </div>

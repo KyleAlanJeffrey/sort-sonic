@@ -19,28 +19,111 @@ for (let i = 0; i < length; i++) {
 }
 `;
 
-type CodeEditorProps = {
-  onRun: (code: string) => void;
-  disabled: boolean;
-  error: string | null;
-  initialCode?: string;
+function highlightCode(code: string): string {
+  let html = code
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  html = html.replace(
+    /(\/\/.*)/g,
+    '<span class="syn-comment">$1</span>'
+  );
+  html = html.replace(
+    /(&quot;[^&]*&quot;|'[^']*'|`[^`]*`)/g,
+    '<span class="syn-string">$1</span>'
+  );
+  html = html.replace(
+    /\b(const|let|var|function|return|if|else|for|while|do|break|continue|new|typeof|instanceof|true|false|null|undefined)\b/g,
+    '<span class="syn-keyword">$1</span>'
+  );
+  html = html.replace(
+    /\b(\d+\.?\d*)\b/g,
+    '<span class="syn-number">$1</span>'
+  );
+  html = html.replace(
+    /\b(compare|swap|length|get|set)\b/g,
+    '<span class="syn-builtin">$1</span>'
+  );
+  html = html.replace(
+    /\b([a-zA-Z_]\w*)\s*\(/g,
+    '<span class="syn-fn">$1</span>('
+  );
+
+  return html;
+}
+
+// Header button for transport controls
+function HeaderBtn({
+  onClick,
+  children,
+  variant = "default",
+  disabled = false,
+}: {
+  onClick: () => void;
+  children: React.ReactNode;
+  variant?: "accent" | "default" | "danger";
+  disabled?: boolean;
+}) {
+  const variants = {
+    accent: "text-accent hover:bg-accent/10",
+    default: "text-foreground-muted hover:bg-surface-3 hover:text-foreground",
+    danger: "text-swap hover:bg-swap/10",
+  };
+
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest rounded transition-all ${variants[variant]} disabled:opacity-30 disabled:pointer-events-none`}
+    >
+      {children}
+    </button>
+  );
+}
+
+export type TransportState = "idle" | "running" | "paused" | "complete";
+
+type TransportControls = {
+  state: TransportState;
+  operationCount: number;
+  onPlay: (code: string) => void;
+  onPause?: () => void;
+  onResume?: () => void;
+  onStep?: () => void;
+  onStop: () => void;
+  playLabel?: string;
 };
 
-export function CodeEditor({ onRun, disabled, error, initialCode }: CodeEditorProps) {
+type CodeEditorProps = {
+  initialCode?: string;
+  error: string | null;
+  transport: TransportControls;
+  readOnly?: boolean;
+};
+
+export function CodeEditor({
+  initialCode,
+  error,
+  transport,
+  readOnly = false,
+}: CodeEditorProps) {
   const [code, setCode] = useState(initialCode ?? DEFAULT_CODE);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const lineCountRef = useRef<HTMLDivElement>(null);
+  const highlightRef = useRef<HTMLPreElement>(null);
+  const codeRef = useRef(code);
 
-  // Sync code when initialCode changes (algorithm selected)
   useEffect(() => {
     if (initialCode !== undefined) {
       setCode(initialCode);
+      codeRef.current = initialCode;
     }
   }, [initialCode]);
 
-  const handleRun = useCallback(() => {
-    onRun(code);
-  }, [code, onRun]);
+  const handlePlay = useCallback(() => {
+    transport.onPlay(codeRef.current);
+  }, [transport]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -50,50 +133,106 @@ export function CodeEditor({ onRun, disabled, error, initialCode }: CodeEditorPr
         if (!textarea) return;
         const start = textarea.selectionStart;
         const end = textarea.selectionEnd;
-        const newCode = code.substring(0, start) + "  " + code.substring(end);
+        const newCode = codeRef.current.substring(0, start) + "  " + codeRef.current.substring(end);
         setCode(newCode);
+        codeRef.current = newCode;
         requestAnimationFrame(() => {
           textarea.selectionStart = textarea.selectionEnd = start + 2;
         });
       }
-      if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && !disabled) {
+      if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && transport.state === "idle") {
         e.preventDefault();
-        handleRun();
+        handlePlay();
       }
     },
-    [code, disabled, handleRun]
+    [transport.state, handlePlay]
   );
 
-  const handleScroll = useCallback(() => {
-    if (textareaRef.current && lineCountRef.current) {
-      lineCountRef.current.scrollTop = textareaRef.current.scrollTop;
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setCode(e.target.value);
+    codeRef.current = e.target.value;
+  }, []);
+
+  const syncScroll = useCallback(() => {
+    if (textareaRef.current) {
+      const scrollTop = textareaRef.current.scrollTop;
+      const scrollLeft = textareaRef.current.scrollLeft;
+      if (lineCountRef.current) lineCountRef.current.scrollTop = scrollTop;
+      if (highlightRef.current) {
+        highlightRef.current.scrollTop = scrollTop;
+        highlightRef.current.scrollLeft = scrollLeft;
+      }
     }
   }, []);
 
   const lineCount = code.split("\n").length;
+  const { state, operationCount, onPause, onResume, onStep, onStop, playLabel } = transport;
+  const isIdle = state === "idle";
+  const isRunning = state === "running";
+  const isPaused = state === "paused";
+  const isComplete = state === "complete";
 
   return (
     <div className="flex flex-col gap-3">
       <div className="relative rounded-xl overflow-hidden border border-border bg-surface">
-        {/* Editor header */}
-        <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/60 bg-surface-2/50">
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-accent shadow-[0_0_4px_var(--accent-glow)]" />
+        {/* Header with transport controls */}
+        <div className="flex items-center justify-between px-3 py-2 border-b border-border/60 bg-surface-2/50 gap-2">
+          {/* Left: label + line count */}
+          <div className="flex items-center gap-2 shrink-0">
+            <div className={`w-1.5 h-1.5 rounded-full ${isRunning ? "bg-accent shadow-[0_0_6px_var(--accent-glow)] animate-pulse" : isComplete ? "bg-sorted" : "bg-accent shadow-[0_0_4px_var(--accent-glow)]"}`} />
             <span className="text-[10px] font-mono text-foreground-muted tracking-widest uppercase">
               Editor
             </span>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-[10px] font-mono text-foreground-muted/50">
-              {lineCount} lines
-            </span>
             <span className="text-[10px] font-mono text-foreground-muted/40">
-              {"\u2318"}+Enter to run
+              {lineCount}L
             </span>
+          </div>
+
+          {/* Center: transport buttons */}
+          <div className="flex items-center gap-1">
+            {isIdle && (
+              <HeaderBtn onClick={handlePlay} variant="accent">
+                {playLabel ?? "Run"}
+              </HeaderBtn>
+            )}
+            {isRunning && (
+              <>
+                {onPause && (
+                  <HeaderBtn onClick={onPause}>Pause</HeaderBtn>
+                )}
+                <HeaderBtn onClick={onStop} variant="danger">Stop</HeaderBtn>
+              </>
+            )}
+            {isPaused && (
+              <>
+                {onResume && (
+                  <HeaderBtn onClick={onResume} variant="accent">Resume</HeaderBtn>
+                )}
+                {onStep && (
+                  <HeaderBtn onClick={onStep}>Step</HeaderBtn>
+                )}
+                <HeaderBtn onClick={onStop}>Reset</HeaderBtn>
+              </>
+            )}
+            {isComplete && (
+              <HeaderBtn onClick={onStop}>Reset</HeaderBtn>
+            )}
+          </div>
+
+          {/* Right: ops counter + shortcut hint */}
+          <div className="flex items-center gap-3 shrink-0">
+            <span className="text-[10px] font-mono text-foreground-muted tabular-nums tracking-wider">
+              {operationCount.toLocaleString()} ops
+            </span>
+            {isIdle && (
+              <span className="text-[10px] font-mono text-foreground-muted/30 hidden sm:block">
+                {"\u2318"}+Enter
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Editor body with line numbers */}
+        {/* Editor body */}
         <div className="flex relative">
           {/* Line numbers */}
           <div
@@ -111,20 +250,28 @@ export function CodeEditor({ onRun, disabled, error, initialCode }: CodeEditorPr
             ))}
           </div>
 
-          {/* Divider */}
           <div className="w-px bg-border/40 my-3" />
 
-          {/* Textarea */}
-          <textarea
-            ref={textareaRef}
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onScroll={handleScroll}
-            spellCheck={false}
-            className="flex-1 h-72 bg-transparent text-foreground font-mono text-sm leading-[1.6rem] p-4 pl-3 resize-none focus:outline-none selection:bg-accent/20 placeholder:text-foreground-muted/30"
-            placeholder="Write your sorting algorithm..."
-          />
+          {/* Code area */}
+          <div className="relative flex-1 overflow-hidden">
+            <pre
+              ref={highlightRef}
+              className="absolute inset-0 h-72 font-mono text-sm leading-[1.6rem] p-4 pl-3 overflow-hidden pointer-events-none whitespace-pre-wrap wrap-break-word"
+              aria-hidden="true"
+              dangerouslySetInnerHTML={{ __html: highlightCode(code) + "\n" }}
+            />
+            <textarea
+              ref={textareaRef}
+              value={code}
+              onChange={handleChange}
+              onKeyDown={handleKeyDown}
+              onScroll={syncScroll}
+              spellCheck={false}
+              readOnly={readOnly}
+              className="relative w-full h-72 bg-transparent text-transparent caret-accent font-mono text-sm leading-[1.6rem] p-4 pl-3 resize-none focus:outline-none selection:bg-accent/20 placeholder:text-foreground-muted/30 z-10"
+              placeholder="Write your sorting algorithm..."
+            />
+          </div>
         </div>
       </div>
 
@@ -134,14 +281,9 @@ export function CodeEditor({ onRun, disabled, error, initialCode }: CodeEditorPr
           <span className="text-swap/90">{error}</span>
         </div>
       )}
-
-      <button
-        onClick={handleRun}
-        disabled={disabled}
-        className="self-start relative px-6 py-2.5 text-xs font-mono uppercase tracking-widest rounded-lg border transition-all duration-150 bg-accent/10 text-accent border-accent/30 hover:bg-accent/20 hover:border-accent/50 hover:shadow-[0_0_16px_var(--accent-glow)] disabled:opacity-30"
-      >
-        {disabled ? "Running..." : "Run"}
-      </button>
     </div>
   );
 }
+
+// Export a helper to get code from the editor via ref
+export { DEFAULT_CODE };
