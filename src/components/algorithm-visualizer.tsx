@@ -2,8 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { Visualizer } from "./visualizer";
-import { StepInfo } from "./step-info";
-import { CodeEditor } from "./code-editor";
+import { AlgorithmEditor } from "./code-editor";
 import { useSortEngine } from "@/hooks/use-sort-engine";
 import { getAlgorithm } from "@/algorithms/metadata";
 import Link from "next/link";
@@ -19,15 +18,12 @@ export function AlgorithmVisualizer({ slug }: AlgorithmVisualizerProps) {
   const engine = useSortEngine(arraySize);
   const algorithmMeta = getAlgorithm(slug);
 
-  const handlePlay = useCallback(
-    (_code: string) => {
-      const algo = getAlgorithm(slug);
-      if (algo) {
-        engine.start(algo.fn, algo.slug);
-      }
-    },
-    [slug, engine]
-  );
+  const handlePlay = useCallback(() => {
+    const algo = getAlgorithm(slug);
+    if (algo) {
+      engine.start(algo.fn, algo.slug);
+    }
+  }, [slug, engine]);
 
   const handleSpeedChange = useCallback(
     (ms: number) => {
@@ -62,68 +58,59 @@ export function AlgorithmVisualizer({ slug }: AlgorithmVisualizerProps) {
         onSpeedChange={handleSpeedChange}
         onSizeChange={handleSizeChange}
         sizeDisabled={isActive || engine.state === "complete"}
-      />
-
-      <StepInfo
-        activeIndices={engine.activeIndices}
-        operationType={engine.operationType}
         state={engine.state}
         algorithmName={algorithmMeta.name}
+        operationCount={engine.operationCount}
       />
 
-      <CodeEditor
-        initialCode={algorithmMeta.code}
-        error={null}
-        readOnly
-        transport={{
-          state: engine.state,
-          operationCount: engine.operationCount,
-          onPlay: handlePlay,
-          onPause: engine.pause,
-          onResume: engine.resume,
-          onStep: engine.step,
-          onStop: () => engine.reset(arraySize),
-          playLabel: "Sort",
-        }}
-      />
+      {/* Code + Analysis side by side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <AlgorithmEditor
+          code={algorithmMeta.code}
+          state={engine.state}
+          operationCount={engine.operationCount}
+          onSort={handlePlay}
+          onPause={engine.pause}
+          onResume={engine.resume}
+          onStep={engine.step}
+          onReset={() => engine.reset(arraySize)}
+        />
 
-      {/* Analysis panel */}
-      <div className="rounded-xl border border-border bg-surface p-5 flex flex-col gap-3">
-        <div className="flex items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-compare shadow-[0_0_4px_var(--compare-glow)]" />
-          <span className="text-[10px] font-mono text-foreground-muted tracking-widest uppercase">
-            Analysis
-          </span>
-        </div>
+        <div className="rounded-xl border border-border bg-surface p-5 flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-compare shadow-[0_0_4px_var(--compare-glow)]" />
+            <span className="text-[10px] font-mono text-foreground-muted tracking-widest uppercase">
+              Analysis
+            </span>
+          </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1.5 text-[11px] font-mono tracking-wider">
-          <div>
-            <span className="text-foreground-muted/60">BEST </span>
-            <span className="text-accent font-medium">{algorithmMeta.timeComplexity.best}</span>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-[11px] font-mono tracking-wider">
+            <div>
+              <span className="text-foreground-muted/60">BEST </span>
+              <span className="text-accent font-medium">{algorithmMeta.timeComplexity.best}</span>
+            </div>
+            <div>
+              <span className="text-foreground-muted/60">AVG </span>
+              <span className="text-compare font-medium">{algorithmMeta.timeComplexity.average}</span>
+            </div>
+            <div>
+              <span className="text-foreground-muted/60">WORST </span>
+              <span className="text-swap font-medium">{algorithmMeta.timeComplexity.worst}</span>
+            </div>
+            <div>
+              <span className="text-foreground-muted/60">SPACE </span>
+              <span className="text-foreground font-medium">{algorithmMeta.spaceComplexity}</span>
+            </div>
           </div>
-          <div>
-            <span className="text-foreground-muted/60">AVG </span>
-            <span className="text-compare font-medium">{algorithmMeta.timeComplexity.average}</span>
-          </div>
-          <div>
-            <span className="text-foreground-muted/60">WORST </span>
-            <span className="text-swap font-medium">{algorithmMeta.timeComplexity.worst}</span>
-          </div>
-          <div>
-            <span className="text-foreground-muted/60">SPACE </span>
-            <span className="text-foreground font-medium">{algorithmMeta.spaceComplexity}</span>
-          </div>
-        </div>
 
-        <div className="mt-1">
-          <span className={`text-[10px] font-mono tracking-widest px-2 py-0.5 rounded border ${algorithmMeta.stable ? "text-sorted border-sorted/30 bg-sorted/5" : "text-foreground-muted border-border bg-surface-2"}`}>
+          <span className={`self-start text-[10px] font-mono tracking-widest px-2 py-0.5 rounded border ${algorithmMeta.stable ? "text-sorted border-sorted/30 bg-sorted/5" : "text-foreground-muted border-border bg-surface-2"}`}>
             {algorithmMeta.stable ? "STABLE" : "UNSTABLE"}
           </span>
-        </div>
 
-        <p className="text-[13px] text-foreground/80 leading-relaxed mt-1">
-          {algorithmMeta.explanation}
-        </p>
+          <p className="text-[13px] text-foreground/80 leading-relaxed mt-auto">
+            {algorithmMeta.explanation}
+          </p>
+        </div>
       </div>
 
       <Link

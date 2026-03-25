@@ -1,6 +1,7 @@
 "use client";
 
 import { OperationType } from "@/algorithms/types";
+import { EngineState } from "@/hooks/use-sort-engine";
 
 type VisualizerProps = {
   array: number[];
@@ -13,6 +14,10 @@ type VisualizerProps = {
   onSpeedChange?: (ms: number) => void;
   onSizeChange?: (size: number) => void;
   sizeDisabled?: boolean;
+  // Status display
+  state?: EngineState;
+  algorithmName?: string;
+  operationCount?: number;
 };
 
 function getBarStyle(
@@ -57,6 +62,60 @@ function getBarStyle(
   };
 }
 
+function StatusText({
+  state,
+  algorithmName,
+  operationType,
+  activeIndices,
+  operationCount,
+}: {
+  state: EngineState;
+  algorithmName: string;
+  operationType: OperationType | null;
+  activeIndices: number[];
+  operationCount: number;
+}) {
+  const opsLabel = (
+    <span className="text-foreground-muted/50 tabular-nums">
+      {operationCount.toLocaleString()} ops
+    </span>
+  );
+
+  if (state === "idle") {
+    return (
+      <div className="flex items-center gap-3">
+        <span className="text-accent">{">"}</span>
+        <span className="cursor-blink">Ready — {algorithmName}</span>
+      </div>
+    );
+  }
+
+  if (state === "complete") {
+    return (
+      <div className="flex items-center gap-3">
+        <span className="text-sorted">SORTED</span>
+        {opsLabel}
+      </div>
+    );
+  }
+
+  if (!operationType) {
+    return <div className="flex items-center gap-3">{opsLabel}</div>;
+  }
+
+  const opLabels: Record<OperationType, string> = { compare: "CMP", swap: "SWP", insert: "INS", sorted: "FIN" };
+  const opColors: Record<OperationType, string> = { compare: "text-compare", swap: "text-swap", insert: "text-swap", sorted: "text-sorted" };
+  const [i, j] = activeIndices;
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className={opColors[operationType]}>{opLabels[operationType]}</span>
+      <span className="text-foreground-muted/60">[{i}{j !== undefined ? `,${j}` : ""}]</span>
+      {opsLabel}
+    </div>
+  );
+}
+
 export function Visualizer({
   array,
   activeIndices,
@@ -68,59 +127,70 @@ export function Visualizer({
   onSpeedChange,
   onSizeChange,
   sizeDisabled = false,
+  state,
+  algorithmName,
+  operationCount,
 }: VisualizerProps) {
   const hasControls = onSpeedChange || onSizeChange;
+  const hasStatus = state !== undefined && algorithmName !== undefined;
 
   return (
     <div className="relative rounded-xl overflow-hidden border border-border bg-surface">
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-border/50">
-        <div className="flex items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-accent shadow-[0_0_6px_var(--accent-glow)]" />
-          <span className="text-[10px] font-mono text-foreground-muted tracking-widest uppercase">
-            Output
-          </span>
-          <span className="text-[10px] font-mono text-foreground-muted/40 ml-1">
-            {array.length} elements
-          </span>
+        {/* Left: label + sliders */}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 shrink-0">
+            <div className={`w-1.5 h-1.5 rounded-full ${state === "running" ? "bg-accent shadow-[0_0_6px_var(--accent-glow)] animate-pulse" : state === "complete" ? "bg-sorted shadow-[0_0_6px_var(--sorted-glow)]" : "bg-accent shadow-[0_0_6px_var(--accent-glow)]"}`} />
+            <span className="text-[10px] font-mono text-foreground-muted tracking-widest uppercase">
+              {array.length} elements
+            </span>
+          </div>
+
+          {hasControls && (
+            <div className="flex items-center gap-4">
+              {onSpeedChange && speed !== undefined && (
+                <label className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono text-foreground-muted/50 tracking-wider uppercase">Spd</span>
+                  <input
+                    type="range"
+                    min={1}
+                    max={200}
+                    value={201 - speed}
+                    onChange={(e) => onSpeedChange(201 - Number(e.target.value))}
+                    className="w-20"
+                  />
+                </label>
+              )}
+              {onSizeChange && arraySize !== undefined && (
+                <label className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono text-foreground-muted/50 tracking-wider uppercase">Size</span>
+                  <input
+                    type="range"
+                    min={10}
+                    max={200}
+                    value={arraySize}
+                    onChange={(e) => onSizeChange(Number(e.target.value))}
+                    className="w-20"
+                    disabled={sizeDisabled}
+                  />
+                  <span className="text-[10px] font-mono text-foreground-muted/40 tabular-nums w-6 text-right">{arraySize}</span>
+                </label>
+              )}
+            </div>
+          )}
         </div>
 
-        {hasControls && (
-          <div className="flex items-center gap-5">
-            {onSpeedChange && speed !== undefined && (
-              <label className="flex items-center gap-2">
-                <span className="text-[10px] font-mono text-foreground-muted/50 tracking-wider uppercase">
-                  Spd
-                </span>
-                <input
-                  type="range"
-                  min={1}
-                  max={200}
-                  value={201 - speed}
-                  onChange={(e) => onSpeedChange(201 - Number(e.target.value))}
-                  className="w-20"
-                />
-              </label>
-            )}
-            {onSizeChange && arraySize !== undefined && (
-              <label className="flex items-center gap-2">
-                <span className="text-[10px] font-mono text-foreground-muted/50 tracking-wider uppercase">
-                  Size
-                </span>
-                <input
-                  type="range"
-                  min={10}
-                  max={200}
-                  value={arraySize}
-                  onChange={(e) => onSizeChange(Number(e.target.value))}
-                  className="w-20"
-                  disabled={sizeDisabled}
-                />
-                <span className="text-[10px] font-mono text-foreground-muted/40 tabular-nums w-6 text-right">
-                  {arraySize}
-                </span>
-              </label>
-            )}
+        {/* Right: status + ops */}
+        {hasStatus && (
+          <div className="text-[10px] font-mono tracking-wider">
+            <StatusText
+              state={state}
+              algorithmName={algorithmName}
+              operationType={operationType}
+              activeIndices={activeIndices}
+              operationCount={operationCount ?? 0}
+            />
           </div>
         )}
       </div>
@@ -130,14 +200,7 @@ export function Visualizer({
         <div className="flex items-end justify-center gap-px h-90 w-full p-4 pb-3">
           {array.map((value, index) => {
             const heightPercent = (value / maxValue) * 100;
-            const style = getBarStyle(
-              value,
-              maxValue,
-              index,
-              activeIndices,
-              sortedIndices,
-              operationType
-            );
+            const style = getBarStyle(value, maxValue, index, activeIndices, sortedIndices, operationType);
             return (
               <div
                 key={index}
@@ -152,7 +215,6 @@ export function Visualizer({
             );
           })}
         </div>
-
         <div className="h-px w-full bg-linear-to-r from-transparent via-accent/10 to-transparent" />
       </div>
     </div>
