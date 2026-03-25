@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { Playground } from "@/components/playground";
+import { PlaygroundWrapper } from "@/components/playground-wrapper";
 
 export const metadata: Metadata = {
   title: "Playground",
@@ -12,13 +12,7 @@ export const metadata: Metadata = {
   },
 };
 
-type PlaygroundPageProps = {
-  searchParams: Promise<{ algorithm?: string }>;
-};
-
-export default async function PlaygroundPage({ searchParams }: PlaygroundPageProps) {
-  const { algorithm } = await searchParams;
-
+export default function PlaygroundPage() {
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <div>
@@ -29,7 +23,7 @@ export default async function PlaygroundPage({ searchParams }: PlaygroundPagePro
         </p>
       </div>
 
-      <Playground initialAlgorithmSlug={algorithm} />
+      <PlaygroundWrapper />
     </div>
   );
 }
