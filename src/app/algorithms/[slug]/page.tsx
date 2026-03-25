@@ -1,7 +1,8 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getAlgorithm, algorithmSlugs } from "@/algorithms/metadata";
-import { SortPlayground } from "@/components/sort-playground";
+import { getAlgorithm, algorithmSlugs, algorithms } from "@/algorithms/metadata";
+import { AlgorithmVisualizer } from "@/components/algorithm-visualizer";
+import Link from "next/link";
 
 export function generateStaticParams() {
   return algorithmSlugs.map((slug) => ({ slug }));
@@ -49,13 +50,36 @@ export default async function AlgorithmPage({
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">{algo.name}</h1>
-        <p className="text-zinc-400 mt-1">{algo.description}</p>
+    <div className="max-w-5xl mx-auto space-y-6">
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">{algo.name}</h1>
+          <p className="text-foreground-muted mt-1">{algo.description}</p>
+        </div>
       </div>
 
-      <SortPlayground initialAlgorithm={slug} />
+      {/* Algorithm nav tabs */}
+      <div className="flex flex-wrap gap-1.5">
+        {algorithms.map((a) => (
+          <Link
+            key={a.slug}
+            href={`/algorithms/${a.slug}`}
+            className={`
+              px-3.5 py-2 text-[11px] font-mono uppercase tracking-wider
+              rounded-md border transition-all duration-200
+              ${
+                a.slug === slug
+                  ? "bg-accent/10 text-accent border-accent/40"
+                  : "bg-surface-2 text-foreground-muted border-border hover:text-foreground hover:border-border-bright"
+              }
+            `}
+          >
+            {a.name}
+          </Link>
+        ))}
+      </div>
+
+      <AlgorithmVisualizer slug={slug} />
 
       <script
         type="application/ld+json"
