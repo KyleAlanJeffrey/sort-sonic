@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Outfit, JetBrains_Mono } from "next/font/google";
 import { Navbar } from "@/components/navbar";
+import { KyleBadge } from "@/components/kyle-badge";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -64,6 +65,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
         <Navbar />
+        <KyleBadge />
         <main className="flex-1 px-6 py-10">{children}</main>
         <footer className="border-t border-border/30 px-6 py-5">
           <div className="max-w-5xl mx-auto flex items-center justify-between">
