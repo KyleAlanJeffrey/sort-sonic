@@ -1,16 +1,13 @@
 import { ImageResponse } from "next/og";
-import { getAlgorithm, algorithmSlugs } from "@/algorithms/metadata";
+import { getAlgorithm } from "@/algorithms/metadata";
 
 export const size = {
   width: 1200,
   height: 630,
 };
 
+export const runtime = "edge";
 export const contentType = "image/png";
-
-export function generateStaticParams() {
-  return algorithmSlugs.map((slug) => ({ slug }));
-}
 
 export default async function Image({
   params,
