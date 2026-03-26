@@ -6,6 +6,6 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: "*",
       allow: "/",
     },
-    sitemap: "https://sortsonic.com/sitemap.xml",
+    sitemap: "https://sortsonic.kylejeffrey.com/sitemap.xml",
   };
 }

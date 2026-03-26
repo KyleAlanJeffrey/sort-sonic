@@ -2,7 +2,7 @@ import { MetadataRoute } from "next";
 import { algorithmSlugs } from "@/algorithms/metadata";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://sortsonic.com";
+  const baseUrl = "https://sortsonic.kylejeffrey.com";
 
   const algorithmPages = algorithmSlugs.map((slug) => ({
     url: `${baseUrl}/algorithms/${slug}`,

@@ -17,7 +17,7 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://sortsonic.com"),
+  metadataBase: new URL("https://sortsonic.kylejeffrey.com"),
   title: {
     default: "SortSonic — See and Hear Sorting Algorithms",
     template: "%s — SortSonic",
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
       "Interactive sorting algorithm visualizer with synchronized audio and animation.",
     type: "website",
     siteName: "SortSonic",
-    url: "https://sortsonic.com",
+    url: "https://sortsonic.kylejeffrey.com",
     locale: "en_US",
   },
   twitter: {
