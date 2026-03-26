@@ -1,5 +1,6 @@
 export {
   default,
+  runtime,
   size,
   contentType,
   generateStaticParams,
