@@ -1,0 +1,13 @@
+{
+    "framework": [
+        "Next.js",
+        "React",
+        "Tailwind CSS"
+    ],
+    "language": [
+        "TypeScript"
+    ],
+    "host": [
+        "Cloudflare Pages"
+    ]
+}
