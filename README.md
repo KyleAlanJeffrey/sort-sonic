@@ -1,6 +1,6 @@
 # SortSonic
 
-**[sortsonic.kylejeffrey.com](https://sortsonic.kylejeffrey.com)**
+**[sortsonic.com](https://sortsonic.com)**
 
 An interactive, browser-based visualizer that brings sorting algorithms to life through synchronized audio and animation. Every comparison, swap, and insertion is mapped to a distinct tone — so you don't just see the algorithm work, you hear it think.
 
